@@ -1,0 +1,79 @@
+---
+- name: Move VM Template to Content Store
+  hosts: localhost
+  gather_facts: no
+  vars:
+    ansible_python_interpreter: "/usr/bin/env python3"
+    vcenter_server: vcenter
+    vcenter_user: administrator@vsphere.local
+    vcenter_pass: password
+    vmname_to_copy: nfs-server
+
+  tasks:
+    - name: Login into vCenter and get cookies
+      uri:
+        url: "https://{{ vcenter_server }}/rest/com/vmware/cis/session"
+        force_basic_auth: yes
+        validate_certs: no
+        method: POST
+        status_code: 200
+        user: "{{ vcenter_user }}"
+        password: "{{ vcenter_pass }}"
+      register: login
+    - name : Get the VM ID
+      uri:
+        url: "https://{{ vcenter_server }}/rest/vcenter/vm?filter.names={{ vmname_to_copy }}"
+        method: GET
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Cookie: "{{ login.set_cookie }}"
+      register: result_vm_id
+    - name : Get the content library
+      uri:
+        url: "https://{{ vcenter_server }}/rest/com/vmware/content/library"
+        method: GET
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Cookie: "{{ login.set_cookie }}"
+      register: result_content_library
+    - name : Create the content Item      
+      uri:
+        url: "https://{{ vcenter_server }}/rest/com/vmware/content/library/item"
+        method: POST
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Cookie: "{{ login.set_cookie }}"
+        body: 
+          create_spec:
+            library_id: "{{ result_content_library.json.value[0] }}"
+            description: "Copied from VM {{ vmname_to_copy }}"
+            name: "{{ vmname_to_copy }}"
+            type: "ovf" 
+        body_format: json
+      register: result_content_item
+    - name : clone VM to content
+      uri:
+        url: "https://{{ vcenter_server }}/rest/com/vmware/vcenter/ovf/library-item"
+        method: POST
+        status_code: 200
+        force_basic_auth: yes
+        validate_certs: no
+        headers:
+          Cookie: "{{ login.set_cookie }}"
+        body: 
+          create_spec:
+            description: "Copied from VM {{ vmname_to_copy }}"
+            name: "{{ vmname_to_copy }}"
+          target:
+            library_id: "{{ result_content_library.json.value[0] }}"
+            library_item_id: "{{ result_content_item.json.value }}"
+          source:
+            id: "{{ result_vm_id.json.value[0].vm }}"
+            type: "VirtualMachine"
+        body_format: json
