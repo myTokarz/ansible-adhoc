@@ -1,0 +1,39 @@
+---
+- name: Setup NTP
+  hosts: all
+
+  tasks:
+
+
+  - name: ensure ntpdate isn't installed
+    package:
+      name: 'ntpdate'
+      state: present
+
+  - name: Set timezone to America/Chicago
+    timezone:
+      name: America/Chicago
+    notify: restart ntpd
+
+  - name: Ensure ntpd is active
+    service:
+      name: ntpd
+      state: started
+
+  - name: install ntpd.conf
+    template:
+      src: ntpd-master.conf.j2
+      dest: /etc/chrony/chrony.conf
+      owner: root
+      group: root
+      mode: 0644
+    notify: restart ntpd
+
+  - name: Make sure NTP is stopped
+    service: name=ntpd
+    state=stopped
+    enabled=yes
+
+  - name: Run ntpstat
+    # ntpstat returns 0 if synchronised and non-zero otherwise
+    command: ntpstat
