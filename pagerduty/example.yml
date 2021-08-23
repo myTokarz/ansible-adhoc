@@ -2,16 +2,16 @@
 - name: Trigger an incident with just the basic options
   community.general.pagerduty_alert:
     name: companyabc
-    integration_key: xxx
-    api_key: yourapikey
+    integration_key: '{{  pd_requesterid }}'
+    api_key: '{{  pd_apikey }}'
     service_id: PDservice
     state: triggered
     desc: problem that led to this trigger
 
 - name: Trigger an incident with more options
   community.general.pagerduty_alert:
-    integration_key: xxx
-    api_key: yourapikey
+    integration_key: '{{  pd_requesterid }}'
+    api_key: '{{  pd_apikey }}'
     service_id: PDservice
     state: triggered
     desc: problem that led to this trigger
@@ -21,8 +21,8 @@
 
 - name: Acknowledge an incident based on incident_key
   community.general.pagerduty_alert:
-    integration_key: xxx
-    api_key: yourapikey
+    integration_key: '{{  pd_requesterid }}'
+    api_key: '{{  pd_apikey }}'
     service_id: PDservice
     state: acknowledged
     incident_key: somekey
@@ -30,8 +30,8 @@
 
 - name: Resolve an incident based on incident_key
   community.general.pagerduty_alert:
-    integration_key: xxx
-    api_key: yourapikey
+    integration_key: '{{  pd_requesterid }}'
+    api_key: '{{  pd_apikey }}'
     service_id: PDservice
     state: resolved
     incident_key: somekey
